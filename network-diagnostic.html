@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Diagnostic Tool - rootscope.dev</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        @media (min-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .info-box {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .label {
+            font-weight: 600;
+            color: #555;
+            font-size: 14px;
+        }
+
+        .value {
+            color: #333;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            text-align: right;
+            word-break: break-all;
+            max-width: 60%;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status.loading {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .instruction {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin-top: 30px;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #1976D2;
+        }
+
+        .instruction strong {
+            display: block;
+            margin-bottom: 8px;
+            color: #0d47a1;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 8px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #667eea;
+            margin: 25px 0 15px 0;
+        }
+
+        .timestamp {
+            text-align: center;
+            color: #999;
+            font-size: 12px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Network Diagnostic</h1>
+        <p class="subtitle">This page will help identify your connection issues</p>
+
+        <div class="grid">
+            <div>
+                <div class="section-title">Connection Information</div>
+                <div class="info-box">
+                    <div class="info-row">
+                        <span class="label">Your IP Address:</span>
+                        <span class="value" id="ip"><span class="status loading">Loading...</span></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">ISP/Provider:</span>
+                        <span class="value" id="isp"><span class="status loading">Loading...</span></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">Location:</span>
+                        <span class="value" id="location"><span class="status loading">Loading...</span></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">Connection Type:</span>
+                        <span class="value" id="connection-type">Detecting...</span>
+                    </div>
+                </div>
+
+                <div class="section-title">DNS & Browser Info</div>
+                <div class="info-box">
+                    <div class="info-row">
+                        <span class="label">DNS Resolver:</span>
+                        <span class="value" id="dns"><span class="status loading">Loading...</span></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">Browser:</span>
+                        <span class="value" id="browser">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">Operating System:</span>
+                        <span class="value" id="os">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">Screen Resolution:</span>
+                        <span class="value" id="screen">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div class="section-title">Website Test</div>
+                <div class="info-box">
+                    <div class="info-row">
+                        <span class="label">Can reach website:</span>
+                        <span class="value" id="website-status"><span class="status loading">Testing...</span></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">Page load time:</span>
+                        <span class="value" id="load-time">-</span>
+                    </div>
+                </div>
+
+                <div class="section-title">Rootscope.dev Test</div>
+                <div class="info-box">
+                    <div class="info-row">
+                        <span class="label">Can load homepage:</span>
+                        <span class="value" id="site-status"><span class="status loading">Testing...</span></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">DNS Resolution:</span>
+                        <span class="value" id="site-dns"><span class="status loading">Checking...</span></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">Response time:</span>
+                        <span class="value" id="site-response">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">Error details:</span>
+                        <span class="value" id="site-error">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="instruction">
+            <strong>📸 Instructions:</strong>
+            Please take a screenshot of this entire page and send it. Then switch to the other network (WiFi ↔ Mobile Data) and visit this page again to take another screenshot. This will help identify the difference between your connections.
+        </div>
+
+        <div class="timestamp" id="timestamp">-</div>
+        <p class="timestamp">Built by <a href="https://rootscope.dev/" target="_blank">https://rootscope.dev/</a></p>
+    </div>
+
+    <script>
+        // Get timestamp
+        document.getElementById('timestamp').textContent = 'Generated: ' + new Date().toLocaleString();
+
+        // Detect browser
+        const ua = navigator.userAgent;
+        let browserName = 'Unknown';
+        if (ua.indexOf('Firefox') > -1) browserName = 'Firefox';
+        else if (ua.indexOf('Chrome') > -1) browserName = 'Chrome';
+        else if (ua.indexOf('Safari') > -1) browserName = 'Safari';
+        else if (ua.indexOf('Edge') > -1) browserName = 'Edge';
+        document.getElementById('browser').textContent = browserName;
+
+        // Detect OS
+        let osName = 'Unknown';
+        if (ua.indexOf('Win') > -1) osName = 'Windows';
+        else if (ua.indexOf('Mac') > -1) osName = 'macOS';
+        else if (ua.indexOf('Linux') > -1) osName = 'Linux';
+        else if (ua.indexOf('Android') > -1) osName = 'Android';
+        else if (ua.indexOf('iOS') > -1 || ua.indexOf('iPhone') > -1) osName = 'iOS';
+        document.getElementById('os').textContent = osName;
+
+        // Screen resolution
+        document.getElementById('screen').textContent = window.screen.width + ' x ' + window.screen.height;
+
+        // Detect connection type
+        const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+        let connectionType = 'Unknown';
+        if (connection) {
+            if (connection.effectiveType) {
+                connectionType = connection.effectiveType.toUpperCase();
+            }
+            if (connection.type) {
+                connectionType += ' (' + connection.type + ')';
+            }
+        }
+        document.getElementById('connection-type').textContent = connectionType;
+
+        // Measure page load time
+        window.addEventListener('load', function() {
+            try {
+                if (performance.timing.loadEventEnd && performance.timing.navigationStart) {
+                    const loadTime = performance.timing.loadEventEnd - performance.timing.navigationStart;
+                    if (loadTime > 0 && loadTime < 60000) { // Only show if positive and less than 60 seconds
+                        document.getElementById('load-time').textContent = (loadTime / 1000).toFixed(2) + ' seconds';
+                    } else {
+                        // Use modern API as fallback
+                        const perfData = performance.getEntriesByType('navigation')[0];
+                        if (perfData && perfData.loadEventEnd) {
+                            document.getElementById('load-time').textContent = (perfData.loadEventEnd / 1000).toFixed(2) + ' seconds';
+                        } else {
+                            document.getElementById('load-time').textContent = 'N/A';
+                        }
+                    }
+                } else {
+                    document.getElementById('load-time').textContent = 'N/A';
+                }
+            } catch (e) {
+                document.getElementById('load-time').textContent = 'N/A';
+            }
+        });
+
+        // Get IP and location info using CORS-friendly APIs
+        // First get IP from ipify (CORS enabled)
+        fetch('https://api.ipify.org?format=json')
+            .then(response => response.json())
+            .then(data => {
+                const userIP = data.ip;
+                document.getElementById('ip').innerHTML = '<span class="status success">' + userIP + '</span>';
+
+                // Then get location info from ip-api.com (CORS enabled, free tier)
+                return fetch('http://ip-api.com/json/' + userIP);
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    document.getElementById('isp').textContent = data.isp || 'Unknown';
+                    document.getElementById('location').textContent = data.city + ', ' + data.regionName + ', ' + data.country;
+
+                    if (data.as) {
+                        document.getElementById('dns').textContent = data.as;
+                    } else {
+                        document.getElementById('dns').textContent = 'Working';
+                    }
+                } else {
+                    document.getElementById('isp').textContent = 'Unable to detect';
+                    document.getElementById('location').textContent = 'Unable to detect';
+                }
+
+                // Test website connectivity
+                document.getElementById('website-status').innerHTML = '<span class="status success">✓ Connected</span>';
+            })
+            .catch(error => {
+                // Fallback: try to at least get IP
+                fetch('https://api.ipify.org?format=json')
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById('ip').innerHTML = '<span class="status success">' + data.ip + '</span>';
+                        document.getElementById('isp').innerHTML = '<span class="status error">Unable to detect</span>';
+                        document.getElementById('location').innerHTML = '<span class="status error">Unable to detect</span>';
+                        document.getElementById('website-status').innerHTML = '<span class="status success">✓ Partially connected</span>';
+                    })
+                    .catch(err => {
+                        document.getElementById('ip').innerHTML = '<span class="status error">Unable to detect</span>';
+                        document.getElementById('isp').innerHTML = '<span class="status error">Unable to detect</span>';
+                        document.getElementById('location').innerHTML = '<span class="status error">Unable to detect</span>';
+                        document.getElementById('dns').innerHTML = '<span class="status error">Unable to detect</span>';
+                        document.getElementById('website-status').innerHTML = '<span class="status error">✗ Connection issue</span>';
+                    });
+            });
+
+        // Alternative DNS check
+        fetch('https://cloudflare-dns.com/dns-query?name=google.com&type=A', {
+            headers: { 'Accept': 'application/dns-json' }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.Answer && data.Answer.length > 0) {
+                    document.getElementById('dns').textContent = 'Working (Cloudflare test passed)';
+                }
+            })
+            .catch(error => {
+                // Silently fail, we already have other DNS info
+            });
+
+        // Test rootscope.dev specifically
+        const targetSite = 'https://rootscope.dev';
+        const testStartTime = Date.now();
+
+        // First, try to resolve DNS for rootscope.dev
+        fetch('https://cloudflare-dns.com/dns-query?name=rootscope.dev&type=A', {
+            headers: { 'Accept': 'application/dns-json' }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.Answer && data.Answer.length > 0) {
+                    const ipAddress = data.Answer[0].data;
+                    document.getElementById('site-dns').innerHTML = '<span class="status success">✓ Resolved to ' + ipAddress + '</span>';
+                } else {
+                    document.getElementById('site-dns').innerHTML = '<span class="status error">✗ DNS lookup failed</span>';
+                }
+            })
+            .catch(error => {
+                document.getElementById('site-dns').innerHTML = '<span class="status error">✗ Cannot check DNS: ' + error.message + '</span>';
+            });
+
+        // Try to fetch the actual site
+        fetch(targetSite, {
+            method: 'HEAD',
+            mode: 'no-cors', // This will prevent CORS errors but limit response info
+            cache: 'no-store'
+        })
+            .then(response => {
+                const responseTime = Date.now() - testStartTime;
+                document.getElementById('site-response').textContent = responseTime + ' ms';
+                document.getElementById('site-status').innerHTML = '<span class="status success">✓ Site reachable</span>';
+                document.getElementById('site-error').textContent = 'None';
+            })
+            .catch(error => {
+                const responseTime = Date.now() - testStartTime;
+                document.getElementById('site-response').textContent = responseTime + ' ms (timeout/error)';
+                document.getElementById('site-status').innerHTML = '<span class="status error">✗ Cannot reach site</span>';
+
+                // Determine error type
+                let errorMessage = error.message;
+                if (error.message.includes('Failed to fetch')) {
+                    errorMessage = 'Network error - DNS issue, firewall, or site down';
+                } else if (error.message.includes('timeout')) {
+                    errorMessage = 'Request timeout - site not responding';
+                }
+                document.getElementById('site-error').textContent = errorMessage;
+            });
+
+        // Also try with an image ping to bypass CORS completely
+        const img = new Image();
+        const imgStartTime = Date.now();
+        img.onload = function() {
+            const loadTime = Date.now() - imgStartTime;
+            if (document.getElementById('site-status').innerHTML.includes('Testing')) {
+                document.getElementById('site-status').innerHTML = '<span class="status success">✓ Site images loading (' + loadTime + 'ms)</span>';
+                document.getElementById('site-error').textContent = 'None';
+            }
+        };
+        img.onerror = function() {
+            const loadTime = Date.now() - imgStartTime;
+            if (document.getElementById('site-status').innerHTML.includes('Testing')) {
+                document.getElementById('site-status').innerHTML = '<span class="status error">✗ Cannot load site resources</span>';
+                document.getElementById('site-error').textContent = 'Resource load failed - possible DNS or network block';
+            }
+        };
+        // Try to load a common resource from the site
+        img.src = targetSite + '/favicon.ico?' + Date.now();
+
+        // Timeout after 10 seconds
+        setTimeout(function() {
+            if (document.getElementById('site-status').innerHTML.includes('Testing')) {
+                document.getElementById('site-status').innerHTML = '<span class="status error">✗ Timeout (10s)</span>';
+                document.getElementById('site-error').textContent = 'Connection timed out';
+                document.getElementById('site-response').textContent = '> 10000 ms';
+            }
+        }, 10000);
+    </script>
+</body>
+</html>
